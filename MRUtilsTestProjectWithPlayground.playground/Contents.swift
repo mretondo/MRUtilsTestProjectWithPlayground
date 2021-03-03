@@ -400,3 +400,4 @@ numbers.size
 numbers.length  // length in utf16 code points which uses 2 bytes for each code point
 numbers.lengthOfBytes(using: .utf16)    // basically the same as (numbers.length * 2)
 
+"🇺🇸".textToImage(ofFontSize: CGFloat(40.0))
