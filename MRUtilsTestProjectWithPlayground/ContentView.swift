@@ -6,8 +6,20 @@
 //
 
 import SwiftUI
-
 import MRUtils
+
+//
+// Sort Finder filenames only by their extensions
+// Missing extensions come first i.e. "file", then by empty extensions i.e. "file.” and finally by extensions
+//
+extension String {
+    var fileExtension: String? {
+        guard let period = lastIndex(of: ".") else { return nil }
+
+        let extensionStart = index(after: period)
+        return String(self[extensionStart...])
+    }
+}
 
 //
 // sort array of people with different names and birth years (asending/desending)
@@ -44,69 +56,78 @@ let people = [
     Person(first: "Ava",    last: "Barnes", yearOfBirth: 1998),
 ]
 
-let sortByYear: SortDescriptor<Person> = sortDescriptor(key: { $0.yearOfBirth })
-let sortByFirstName: SortDescriptor<Person> = sortDescriptor(key: { $0.first }, by: String.localizedStandardCompare)
-let sortByLastName: SortDescriptor<Person> = sortDescriptor(key: { $0.last }, by: String.localizedStandardCompare)
-let sortByYearDesending: SortDescriptor<Person> = sortDescriptor(key: { $0.yearOfBirth }, by: >)
-
-var combinedSortDescriptors: SortDescriptor<Person> = combineSortDescriptors (using: [sortByLastName, sortByFirstName, sortByYear])
-var asendingPeople = people.sorted(by: combinedSortDescriptors)
-var desendingPeople = people.sorted(by: combineSortDescriptors (using: [sortByLastName, sortByFirstName, sortByYearDesending]))
-
 //
-// Sort Finder filenames only by their extensions
-// Missing extensions come first i.e. "file", then by empty extensions i.e. "file.” and finally by extensions
+// use SortDescriptor.swift from MRUtils to do multi-level sorting
 //
-extension String {
-    var fileExtension: String? {
-        guard let period = lastIndex(of: ".") else { return nil }
+let sortByYear: SortDescriptor<Person>           = sortDescriptor(key: { $0.yearOfBirth })
+let sortByYearDesending: SortDescriptor<Person>  = sortDescriptor(key: { $0.yearOfBirth }, by: >)
+let sortByFirstName: SortDescriptor<Person>      = sortDescriptor(key: { $0.first }, by: String.localizedStandardCompare)
+let sortByLastName: SortDescriptor<Person>       = sortDescriptor(key: { $0.last }, by: String.localizedStandardCompare)
 
-        let extensionStart = index(after: period)
-        return String(self[extensionStart...])
-    }
-}
-
-var files = ["file.swift", "one", "two", "test.h", "three", "file.h", "file.", "file.c"]
-
-let compare = lift(String.localizedStandardCompare)
-let filesAsending = files.sorted(by: sortDescriptor(key: { $0.fileExtension }, by: compare))
-// ["one", "two", "three", "file.", "file.c", "test.h", "file.h", "file.swift"]
-
-var filesDescending: String {
-    files.sort { e0, e1 in
-        // don't swap items if both don't have extensions
-        if e1.fileExtension == nil && e0.fileExtension == nil {
-            return false
-        }
-
-        // if file on the right has no extension it comes first
-        if e0.fileExtension == nil {
-            return true
-        }
-
-        // if file on the left has no extension it comes first
-        if e1.fileExtension == nil {
-            return false
-        }
-
-        return e1.fileExtension.flatMap { e0.fileExtension?.localizedStandardCompare($0) } == .orderedDescending
-    }
-    // files ["one", "two", "three", "file.swift", "test.h", "file.h", "file.c", "file."]
-    return files.description
-}
-
-var filename = "file.swift"
+//var files = ["file.swift", "one", "two", "test.h", "three", "file.h", "file.", "file.c"]
+var files = ["b", "a.", "a", "b.", "a.x", "b.h"]
 
 struct ContentView: View {
+    var asendingPeople  = people.sorted(by: combineSortDescriptors (using: [sortByLastName, sortByFirstName, sortByYear]))
+    var desendingPeople = people.sorted(by: combineSortDescriptors (sortByLastName, sortByFirstName, sortByYearDesending))
+
+    //
+    // file names sorted like Finder
+    //
+    let fileNamesAsending = files.sorted(by: sortDescriptor(key: { $0 },
+                                                            by: String.localizedStandardCompare))
+    let fileNamesDesending = files.sorted(by: sortDescriptor(key: { $0 },
+                                                             ascending: false,
+                                                             by: String.localizedStandardCompare))
+
+    //
+    // file extensions sorted like Finder
+    // 'lift' allows String.localizedStandardCompare to take optionals
+    //
+    let extensionsAsending = files.sorted(by: sortDescriptor(key: { $0.fileExtension },
+                                                             by: lift(String.localizedStandardCompare)))
+    let extensionsDesending = files.sorted(by: sortDescriptor(key: { $0.fileExtension },
+                                                              ascending: false,
+                                                              by: lift(String.localizedStandardCompare)))
+
+    //
+    // file extensions sorted descending like Finder NOT using SortDescriptor
+    //
+    var fileExtensionsDescending: [String] {
+        return files.sorted { lhs, rhs in
+            switch (lhs.fileExtension, rhs.fileExtension) {
+                case (nil, nil): return false   // don't swap
+                case (nil, _): return false     // descending so nil comes second
+                case (_, nil): return true      // descending so nil comes second
+                case (_, _): return lhs.fileExtension!.localizedStandardCompare(rhs.fileExtension!) == .orderedDescending
+            }
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading) {
             Text(asendingPeople.description).padding()
             Text(desendingPeople.description).padding()
-            Text(files.description).padding()
-            Text(filesAsending.description).padding()
-            Text(filesDescending).padding()
-            Text(filename[2...6])   // use StringUtil
+            VStack() {
+                Text("files.description")
+                Text(files.description)
+            }.padding()
+            VStack() {
+                Text("fileNamesAsending/Desending")
+                Text(fileNamesAsending.description)
+                Text(fileNamesDesending.description)
+            }.padding()
+            VStack() {
+                Text("extensionsAsending/Desending")
+                Text(extensionsAsending.description)
+                Text(extensionsDesending.description)
+            }.padding()
+            VStack() {
+                Text("fileExtensionsDescending")
+                Text(fileExtensionsDescending.description)
+            }.padding()
         }
+        .padding()
     }
 }
 

@@ -38,19 +38,6 @@ let people = [
 ]
 
 //
-// use SortDescriptor.swift from MRUtils to do multi-level sorting
-//
-let sortByYear: SortDescriptor<Person> = sortDescriptor(key: { $0.yearOfBirth })
-let sortByYearDesending: SortDescriptor<Person> = sortDescriptor(key: { $0.yearOfBirth }, by: >)
-let sortByFirstName: SortDescriptor<Person> = sortDescriptor(key: { $0.first }, by: String.localizedStandardCompare)
-let sortByLastName: SortDescriptor<Person> = sortDescriptor(key: { $0.last }, by: String.localizedStandardCompare)
-
-var combinedSortDescriptors = combineSortDescriptors (using: [sortByLastName, sortByFirstName, sortByYear])
-var asendingPeople = people.sorted(by: combinedSortDescriptors)
-combinedSortDescriptors = combineSortDescriptors (using: [sortByLastName, sortByFirstName, sortByYearDesending])
-var desendingPeople = people.sorted(by: combinedSortDescriptors)
-
-//
 // Sort Finder filenames only by their extensions
 // Missing extensions come first i.e. "file", then by empty extensions i.e. "file.” and finally by extensions
 //
@@ -62,6 +49,19 @@ extension String {
         return String(self[extensionStart...])
     }
 }
+
+//
+// use SortDescriptor.swift from MRUtils to do multi-level sorting
+//
+let sortByYear: SortDescriptor<Person> = sortDescriptor(key: { $0.yearOfBirth })
+let sortByYearDesending: SortDescriptor<Person> = sortDescriptor(key: { $0.yearOfBirth }, by: >)
+let sortByFirstName: SortDescriptor<Person> = sortDescriptor(key: { $0.first }, by: String.localizedStandardCompare)
+let sortByLastName: SortDescriptor<Person> = sortDescriptor(key: { $0.last }, by: String.localizedStandardCompare)
+
+var combinedSortDescriptors = combineSortDescriptors (using: [sortByLastName, sortByFirstName, sortByYear])
+var asendingPeople = people.sorted(by: combinedSortDescriptors)
+var combinedSortDescriptors1 = combineSortDescriptors (sortByLastName, sortByFirstName, sortByYearDesending)
+var desendingPeople = people.sorted(by: combinedSortDescriptors1)
 
 //var files = ["file.swift", "one", "two", "test.h", "three", "file.h", "file.", "file.c"]
 var files = ["b", "a.", "a", "b.", "a.x", "b.h"]
